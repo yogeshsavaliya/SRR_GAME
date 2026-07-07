@@ -3,9 +3,9 @@ using UnityEngine;
 namespace Arrows.Game
 {
     /// <summary>
-    /// Zero-configuration entry point. Using RuntimeInitializeOnLoadMethod means
-    /// the game boots from whatever scene is loaded (including an empty
-    /// SampleScene) without any manual scene wiring or prefabs.
+    /// Safety-net entry point. The game is wired into SampleScene via a
+    /// GameController component, but if a scene has no GameController (e.g. a
+    /// brand-new empty scene), this creates one so the game still runs on Play.
     /// </summary>
     public static class GameBootstrap
     {
@@ -16,6 +16,9 @@ namespace Arrows.Game
         {
             if (_started) return;
             _started = true;
+
+            // A GameController placed in the scene takes precedence.
+            if (Object.FindFirstObjectByType<GameController>() != null) return;
 
             var go = new GameObject("ArrowsGame");
             Object.DontDestroyOnLoad(go);
