@@ -27,20 +27,22 @@ namespace Arrows.Core
     /// </summary>
     public static class LevelLibrary
     {
-        // Levels 1-2 are hand-authored intros; 3-10 are generated and verified
-        // solvable by BoardSolver (see tools/run-logic-tests.sh).
+        // Each level fills a distinct SHAPE with arrows. Level 1 is an easy
+        // warm-up; the rest are generated + verified solvable by BoardSolver
+        // (see tools/run-logic-tests.sh, "gen" mode). '.' cells are empty
+        // background; arrows travel through them to leave the board.
         public static readonly LevelDefinition[] Levels = new[]
         {
-            new LevelDefinition("Warm Up",    "UUU/L.R/DDD", 5),
-            new LevelDefinition("First Steps","URD/L.R/ULD", 5),
-            new LevelDefinition("Crossroads", "LUUL/LDD./D.../.D.R", 5),
-            new LevelDefinition("Gridlock",   "URUU/U.DU/LDDR/DR..", 4),
-            new LevelDefinition("Pinwheel",   "L.R.R/LU.RR/..LRR/RD.../DD.R.", 4),
-            new LevelDefinition("Tangle",     "RU.UU/.LULR/L..LU/LU..R/LDLRU", 4),
-            new LevelDefinition("Knots",      "DLLUD/L..UR/LL.UR/DR..D/DLDDD", 3),
-            new LevelDefinition("Labyrinth",  "LUR.U./U..U.R/U..U.R/LUU.RR/LLDRRR/LRD.DD", 3),
-            new LevelDefinition("Big Knot",   "UUULUR/D.U.DR/LUU..D/L.U.RR/DULRDD/DDDDRD", 3),
-            new LevelDefinition("Nightmare",  "DLUUUR/L.DLUR/LL..LR/LL.D.R/LL..RR/LDDDUR", 3),
+            new LevelDefinition("Warm Up",     "UUU/L.R/DDD", 5),
+            new LevelDefinition("Square",      "UURR/DDRR/LLRR/LLDD", 5),
+            new LevelDefinition("Pyramid",     "..L../.UUR./LLLDR", 5),
+            new LevelDefinition("Diamond",     "..R../.LUR./URUDU/.DDD./..R..", 4),
+            new LevelDefinition("Plus",        "..L../..L../UUUDR/..L../..R..", 4),
+            new LevelDefinition("Letter H",    "U...L/L...R/UUULR/U...L/D...D", 4),
+            new LevelDefinition("Ring",        "UUUUR/R...R/L...R/L...L/LLDRD", 3),
+            new LevelDefinition("Arrow",       "...R.../..DUU../.ULLRR./DUDUUDD/...L.../...D.../...R...", 3),
+            new LevelDefinition("Big Diamond", "...R.../..LLL../.LLRDR./UULRDUR/.RURDR./..DDR../...D...", 3),
+            new LevelDefinition("Heart",       ".UR.RR./DULLDUD/DLLLDUR/.LRDDR./..RRR../...L...", 3),
         };
 
         public static int Count { get { return Levels.Length; } }

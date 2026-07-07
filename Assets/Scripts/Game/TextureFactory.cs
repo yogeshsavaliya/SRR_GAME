@@ -94,18 +94,17 @@ namespace Arrows.Game
             return ToSprite(Bake(px, Res));
         }
 
-        /// <summary>A white arrow glyph (stem + head) pointing up, on transparency.</summary>
+        /// <summary>
+        /// A thin line-art arrow (shaft + chevron head) pointing up, on
+        /// transparency — matches the reference game's stroke style.
+        /// </summary>
         public static Sprite ArrowGlyph(Color32 color)
         {
             var px = NewCanvas(Res);
-            float cx = Res * 0.5f;
-            // Head (triangle) in the upper half.
-            FillTriangle(px, Res,
-                cx, Res * 0.86f,
-                Res * 0.24f, Res * 0.50f,
-                Res * 0.76f, Res * 0.50f, color);
-            // Stem (rectangle) in the lower half.
-            FillRoundedRect(px, Res, Res * 0.40f, Res * 0.16f, Res * 0.60f, Res * 0.56f, Res * 0.05f, color);
+            const float thick = 0.135f;
+            StrokeLine(px, Res, 0.5f, 0.12f, 0.5f, 0.72f, thick, color); // shaft
+            StrokeLine(px, Res, 0.5f, 0.84f, 0.28f, 0.56f, thick, color); // head left
+            StrokeLine(px, Res, 0.5f, 0.84f, 0.72f, 0.56f, thick, color); // head right
             return ToSprite(Bake(px, Res));
         }
 

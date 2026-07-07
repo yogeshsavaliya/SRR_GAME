@@ -16,6 +16,17 @@ namespace Arrows.Core
     {
         public static Board Generate(int width, int height, int arrowCount, int seed)
         {
+            return Generate(width, height, arrowCount, seed, null);
+        }
+
+        /// <summary>
+        /// Generate a solvable board. When <paramref name="mask"/> is non-null,
+        /// arrows are only placed in cells where mask[x,y] is true, so the filled
+        /// arrows form a shape/picture. Arrows still travel through any empty cell
+        /// (inside or outside the mask) to leave the board.
+        /// </summary>
+        public static Board Generate(int width, int height, int arrowCount, int seed, bool[,] mask)
+        {
             var rng = new Random(seed);
             var board = new Board(width, height);
 
@@ -23,7 +34,7 @@ namespace Arrows.Core
             if (arrowCount > maxCells) arrowCount = maxCells;
 
             int placed = 0;
-            int safety = maxCells * 200;
+            int safety = maxCells * 400;
             int id = 0;
 
             while (placed < arrowCount && safety-- > 0)
@@ -31,6 +42,7 @@ namespace Arrows.Core
                 int x = rng.Next(width);
                 int y = rng.Next(height);
                 if (board.IsOccupied(x, y)) continue;
+                if (mask != null && !mask[x, y]) continue;
 
                 Direction[] dirs = ShuffledDirections(rng);
                 for (int i = 0; i < dirs.Length; i++)
@@ -44,6 +56,28 @@ namespace Arrows.Core
                 }
             }
             return board;
+        }
+
+        /// <summary>Parse a shape from ASCII rows: '#' = cell in shape, anything else = outside.</summary>
+        public static bool[,] ParseMask(string[] rows, out int width, out int height)
+        {
+            height = rows.Length;
+            width = 0;
+            for (int i = 0; i < rows.Length; i++)
+                if (rows[i].Length > width) width = rows[i].Length;
+
+            var mask = new bool[width, height];
+            for (int y = 0; y < height; y++)
+                for (int x = 0; x < rows[y].Length; x++)
+                    mask[x, y] = rows[y][x] == '#';
+            return mask;
+        }
+
+        public static int MaskCount(bool[,] mask)
+        {
+            int c = 0;
+            foreach (bool b in mask) if (b) c++;
+            return c;
         }
 
         private static bool RayIsClear(Board board, int x, int y, Direction dir)

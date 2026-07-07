@@ -13,23 +13,17 @@ namespace Arrows.Game
     {
         private enum Phase { Playing, Won, Lost }
 
-        // Palette.
-        private static readonly Color Background = new Color(0.11f, 0.13f, 0.18f);
+        // Palette (light theme with dark line-art arrows, matching the reference).
+        private static readonly Color Background = new Color(0.97f, 0.97f, 0.98f);
+        private static readonly Color ArrowStroke = new Color(0.11f, 0.14f, 0.26f);
         private static readonly Color HeartFull = new Color(0.93f, 0.29f, 0.36f);
-        private static readonly Color HeartEmpty = new Color(0.28f, 0.31f, 0.38f);
-        private static readonly Color NumberColor = new Color(0.87f, 0.90f, 0.97f);
-        private static readonly Color Dim = new Color(0f, 0f, 0f, 0.72f);
-        private static readonly Color PanelColor = new Color(0.16f, 0.19f, 0.27f);
+        private static readonly Color HeartEmpty = new Color(0.82f, 0.84f, 0.88f);
+        private static readonly Color NumberColor = new Color(0.11f, 0.14f, 0.26f);
+        private static readonly Color Dim = new Color(0.11f, 0.14f, 0.26f, 0.42f);
+        private static readonly Color PanelColor = new Color(1f, 1f, 1f);
+        private static readonly Color NeutralBtn = new Color(0.62f, 0.65f, 0.72f);
         private static readonly Color WinColor = new Color(0.30f, 0.78f, 0.47f);
         private static readonly Color LoseColor = new Color(0.93f, 0.34f, 0.36f);
-
-        private static readonly Color[] DirColors =
-        {
-            new Color(0.26f, 0.53f, 0.96f), // Up
-            new Color(0.30f, 0.78f, 0.47f), // Right
-            new Color(0.96f, 0.60f, 0.23f), // Down
-            new Color(0.66f, 0.42f, 0.90f)  // Left
-        };
 
         private Camera _cam;
         private GameSession _session;
@@ -48,7 +42,6 @@ namespace Arrows.Game
         private readonly List<ButtonHit> _buttons = new List<ButtonHit>();
 
         // Cached sprites.
-        private Sprite[] _tileSprites;
         private Sprite _glyphSprite;
         private Sprite _heartSprite;
         private Sprite _panelSprite;
@@ -80,8 +73,6 @@ namespace Arrows.Game
             _cam.transform.position = new Vector3(0f, 0f, -10f);
             _cam.transform.rotation = Quaternion.identity;
 
-            _tileSprites = new Sprite[4];
-            for (int i = 0; i < 4; i++) _tileSprites[i] = TextureFactory.RoundedTile(DirColors[i]);
             _glyphSprite = TextureFactory.ArrowGlyph(Color.white);
             _heartSprite = TextureFactory.Heart(Color.white);
             _panelSprite = TextureFactory.RoundedTile(Color.white);
@@ -167,8 +158,7 @@ namespace Arrows.Game
                     var go = new GameObject("Arrow_" + x + "_" + y);
                     go.transform.SetParent(_boardRoot.transform, false);
                     var tile = go.AddComponent<ArrowTile>();
-                    tile.Init(x, y, dir, CellToWorld(x, y), 1f,
-                        _tileSprites[(int)dir], _glyphSprite, DirColors[(int)dir]);
+                    tile.Init(x, y, dir, CellToWorld(x, y), 1f, _glyphSprite, ArrowStroke);
                     _tiles[Key(x, y)] = tile;
                 }
         }
@@ -324,7 +314,7 @@ namespace Arrows.Game
             if (win)
             {
                 bool hasNext = true; // endless generation means there is always a next level
-                AddButton(new Vector3(-1.0f, -1.05f, 0f), _replaySprite, HeartEmpty, () => LoadLevel(_levelIndex));
+                AddButton(new Vector3(-1.0f, -1.05f, 0f), _replaySprite, NeutralBtn, () => LoadLevel(_levelIndex));
                 if (hasNext)
                     AddButton(new Vector3(1.0f, -1.05f, 0f), _nextSprite, WinColor, () => LoadLevel(_levelIndex + 1));
             }

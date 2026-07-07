@@ -15,38 +15,29 @@ namespace Arrows.Game
         public Direction Dir { get; private set; }
         public bool IsAnimating { get; private set; }
 
-        private SpriteRenderer _tile;
         private SpriteRenderer _glyph;
         private Color _baseColor;
         private Vector3 _homePosition;
 
         public void Init(int x, int y, Direction dir, Vector3 worldPos, float cellSize,
-            Sprite tileSprite, Sprite glyphSprite, Color tileColor)
+            Sprite glyphSprite, Color strokeColor)
         {
             GridX = x;
             GridY = y;
             Dir = dir;
             _homePosition = worldPos;
-            _baseColor = tileColor;
+            _baseColor = strokeColor;
             transform.position = worldPos;
 
             float fill = cellSize * 0.92f;
-
-            var tileGo = new GameObject("Tile");
-            tileGo.transform.SetParent(transform, false);
-            _tile = tileGo.AddComponent<SpriteRenderer>();
-            _tile.sprite = tileSprite;
-            _tile.color = tileColor;
-            _tile.sortingOrder = 10;
-            tileGo.transform.localScale = new Vector3(fill, fill, 1f);
 
             var glyphGo = new GameObject("Glyph");
             glyphGo.transform.SetParent(transform, false);
             _glyph = glyphGo.AddComponent<SpriteRenderer>();
             _glyph.sprite = glyphSprite;
-            _glyph.color = Color.white;
+            _glyph.color = strokeColor;
             _glyph.sortingOrder = 11;
-            glyphGo.transform.localScale = new Vector3(fill * 0.62f, fill * 0.62f, 1f);
+            glyphGo.transform.localScale = new Vector3(fill, fill, 1f);
             glyphGo.transform.localRotation = Quaternion.Euler(0f, 0f, DirectionUtil.ZRotationDegrees(dir));
         }
 
@@ -98,22 +89,18 @@ namespace Arrows.Game
                 float offset = Mathf.Sin(k * Mathf.PI * 6f) * 0.12f * (1f - k);
                 transform.position = _homePosition + perp * offset;
                 float redness = Mathf.Sin(k * Mathf.PI); // flash toward red then back
-                if (_tile != null)
-                    _tile.color = Color.Lerp(_baseColor, new Color(0.95f, 0.25f, 0.25f), redness);
+                if (_glyph != null)
+                    _glyph.color = Color.Lerp(_baseColor, new Color(0.93f, 0.29f, 0.36f), redness);
                 yield return null;
             }
             transform.position = _homePosition;
-            if (_tile != null) _tile.color = _baseColor;
+            if (_glyph != null) _glyph.color = _baseColor;
             IsAnimating = false;
             if (onComplete != null) onComplete();
         }
 
         private void SetAlpha(float a)
         {
-            if (_tile != null)
-            {
-                Color c = _tile.color; c.a = a; _tile.color = c;
-            }
             if (_glyph != null)
             {
                 Color g = _glyph.color; g.a = a; _glyph.color = g;
