@@ -64,9 +64,12 @@ just the shell exit status.
   `UnityEngine` dependency (board model, move resolution, hearts, solver, level
   generator). `Game/` is the Unity view layer (procedural sprites, tap input,
   animations, UI, level flow).
-- The game **auto-boots from any scene** via `GameBootstrap`
-  (`[RuntimeInitializeOnLoadMethod]`) — no scene wiring, prefabs, or art assets
-  are required, so pressing Play on the empty `SampleScene` runs the full game.
+- `SampleScene` contains an **"Arrows Game"** GameObject with the `GameController`
+  component, so pressing **Play** runs the full game. The board/UI are built
+  procedurally at runtime, so the Scene/Game view looks empty in edit mode until
+  you press Play — this is expected. `GameBootstrap`
+  (`[RuntimeInitializeOnLoadMethod]`) is a safety net that spawns a controller
+  only if a scene has none. No prefabs or art assets are required.
 - **Test the logic without a Unity license:** `bash tools/run-logic-tests.sh`
   compiles `Core/` + `tools/LogicTests` with the editor's bundled Mono compiler
   and runs mechanic/hearts/solver tests (all handcrafted + generated levels are
