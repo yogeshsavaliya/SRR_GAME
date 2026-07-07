@@ -17,19 +17,14 @@ internal static class PreviewRender
     private const int SideMargin = 90;
 
     private static byte[] _fb; // RGB framebuffer
+    private static int _clipTop; // rows above this are not drawn (arrows vanish into the UI band)
 
-    // Palette (matches Arrows.Game.GameController).
-    private static readonly byte[] Bg = { 28, 33, 46 };
-    private static readonly byte[][] DirColor =
-    {
-        new byte[]{66,135,245},  // Up
-        new byte[]{77,199,120},  // Right
-        new byte[]{245,153,59},  // Down
-        new byte[]{168,107,229}  // Left
-    };
+    // Palette (light theme with dark line-art arrows, matches GameController).
+    private static readonly byte[] Bg = { 247, 247, 250 };
+    private static readonly byte[] Stroke = { 28, 36, 66 };
+    private static readonly byte[] Green = { 77, 199, 120 };
     private static readonly byte[] HeartFull = { 237, 74, 92 };
-    private static readonly byte[] HeartEmpty = { 71, 79, 97 };
-    private static readonly byte[] NumberCol = { 222, 230, 247 };
+    private static readonly byte[] NumberCol = { 28, 36, 66 };
     private static readonly byte[] White = { 255, 255, 255 };
 
     private static int _levelDisplay;
@@ -79,6 +74,7 @@ internal static class PreviewRender
         int cellPx, x0, y0;
         LayoutBoard(board, out cellPx, out x0, out y0);
 
+        _clipTop = TopUI; // escaping arrows disappear when leaving the play area
         for (int y = 0; y < board.Height; y++)
             for (int x = 0; x < board.Width; x++)
             {
@@ -95,9 +91,10 @@ internal static class PreviewRender
                     cy += DirectionUtil.Dy(d) * travel * animP;
                     alpha = 1f - Math.Max(0f, (animP - 0.55f) / 0.45f);
                 }
-                DrawTile(cx, cy, cellPx, d, alpha);
+                DrawArrow(cx, cy, cellPx, d, alpha);
             }
 
+        _clipTop = 0;
         DrawHearts();
         Draw7SegNumber(W * 0.5f, 210, 96, _levelDisplay, NumberCol);
         if (win) DrawWinBadge();
@@ -120,28 +117,11 @@ internal static class PreviewRender
 
     // ---- drawing ---------------------------------------------------------
 
-    private static void DrawTile(float cx, float cy, int cellPx, Direction d, float alpha)
+    private static void DrawArrow(float cx, float cy, int cellPx, Direction d, float alpha)
     {
-        float half = cellPx * 0.5f;
-        float pad = cellPx * 0.07f;
-        byte[] col = DirColor[(int)d];
-        FillRoundedRect(cx - half + pad, cy - half + pad, cx + half - pad, cy + half - pad,
-            cellPx * 0.16f, col, alpha);
-        DrawArrowGlyph(cx, cy, cellPx * 0.30f, d, alpha);
-    }
-
-    private static void DrawArrowGlyph(float cx, float cy, float s, Direction d, float alpha)
-    {
-        // Up-oriented glyph in math coords (y up); rotate per direction.
-        var head = new float[][]
-        {
-            new[]{0f, 0.58f * s}, new[]{-0.34f * s, 0.06f * s}, new[]{0.34f * s, 0.06f * s}
-        };
-        var stem = new float[][]
-        {
-            new[]{-0.14f * s, -0.58f * s}, new[]{0.14f * s, -0.58f * s},
-            new[]{0.14f * s, 0.12f * s}, new[]{-0.14f * s, 0.12f * s}
-        };
+        // Thin line-art arrow (shaft + chevron head), rotated per direction.
+        float s = cellPx * 0.32f;
+        float thick = cellPx * 0.08f;
         float ang = 0f;
         if (d == Direction.Right) ang = -90f;
         else if (d == Direction.Down) ang = 180f;
@@ -149,11 +129,14 @@ internal static class PreviewRender
         float rad = ang * (float)Math.PI / 180f;
         float ca = (float)Math.Cos(rad), sa = (float)Math.Sin(rad);
 
-        float[] h0 = Rot(cx, cy, ca, sa, head[0]), h1 = Rot(cx, cy, ca, sa, head[1]), h2 = Rot(cx, cy, ca, sa, head[2]);
-        FillTriangle(h0[0], h0[1], h1[0], h1[1], h2[0], h2[1], White, alpha);
-        float[] s0 = Rot(cx, cy, ca, sa, stem[0]), s1 = Rot(cx, cy, ca, sa, stem[1]), s2 = Rot(cx, cy, ca, sa, stem[2]), s3 = Rot(cx, cy, ca, sa, stem[3]);
-        FillTriangle(s0[0], s0[1], s1[0], s1[1], s2[0], s2[1], White, alpha);
-        FillTriangle(s0[0], s0[1], s2[0], s2[1], s3[0], s3[1], White, alpha);
+        float[] tail = Rot(cx, cy, ca, sa, new[] { 0f, -0.62f * s });
+        float[] apex = Rot(cx, cy, ca, sa, new[] { 0f, 0.66f * s });
+        float[] armL = Rot(cx, cy, ca, sa, new[] { -0.34f * s, 0.28f * s });
+        float[] armR = Rot(cx, cy, ca, sa, new[] { 0.34f * s, 0.28f * s });
+
+        StrokeLine(tail[0], tail[1], apex[0], apex[1], thick, Stroke, alpha);
+        StrokeLine(apex[0], apex[1], armL[0], armL[1], thick, Stroke, alpha);
+        StrokeLine(apex[0], apex[1], armR[0], armR[1], thick, Stroke, alpha);
     }
 
     private static float[] Rot(float cx, float cy, float ca, float sa, float[] v)
@@ -189,19 +172,20 @@ internal static class PreviewRender
 
     private static void DrawWinBadge()
     {
-        // Dim, panel, green badge and a check mark.
+        // Dim the light background, draw a white card, a green badge and a check.
         for (int i = 0; i < _fb.Length; i += 3)
         {
-            _fb[i] = (byte)(_fb[i] * 0.35f);
-            _fb[i + 1] = (byte)(_fb[i + 1] * 0.35f);
-            _fb[i + 2] = (byte)(_fb[i + 2] * 0.35f);
+            _fb[i] = (byte)(_fb[i] * 0.55f + 28 * 0.45f);
+            _fb[i + 1] = (byte)(_fb[i + 1] * 0.55f + 36 * 0.45f);
+            _fb[i + 2] = (byte)(_fb[i + 2] * 0.55f + 66 * 0.45f);
         }
         float cx = W * 0.5f, cy = H * 0.42f;
-        FillRoundedRect(cx - 150, cy - 150, cx + 150, cy + 150, 60, DirColor[1], 1f);
+        FillRoundedRect(cx - 230, cy - 250, cx + 230, cy + 300, 40, White, 1f);
+        FillRoundedRect(cx - 150, cy - 150, cx + 150, cy + 150, 60, Green, 1f);
         // Check mark strokes.
         StrokeLine(cx - 70, cy + 10, cx - 15, cy + 65, 26, White);
         StrokeLine(cx - 15, cy + 65, cx + 85, cy - 60, 26, White);
-        Draw7SegNumber(cx, cy + 230, 80, _levelDisplay, White);
+        Draw7SegNumber(cx, cy + 240, 80, _levelDisplay, NumberCol);
     }
 
     // ---- raster primitives ----------------------------------------------
@@ -216,7 +200,7 @@ internal static class PreviewRender
 
     private static void SetPx(int x, int y, byte[] col, float alpha)
     {
-        if (x < 0 || x >= W || y < 0 || y >= H) return;
+        if (x < 0 || x >= W || y < _clipTop || y >= H) return;
         int idx = (y * W + x) * 3;
         if (alpha >= 1f)
         {
@@ -265,7 +249,7 @@ internal static class PreviewRender
             }
     }
 
-    private static void StrokeLine(float ax, float ay, float bx, float by, float thick, byte[] col)
+    private static void StrokeLine(float ax, float ay, float bx, float by, float thick, byte[] col, float alpha = 1f)
     {
         float half = thick * 0.5f;
         int x0 = (int)Math.Floor(Math.Min(ax, bx) - half);
@@ -281,7 +265,7 @@ internal static class PreviewRender
                 float t = len2 <= 0f ? 0f : Clamp01(((px - ax) * dx + (py - ay) * dy) / len2);
                 float qx = ax + t * dx, qy = ay + t * dy;
                 float ddx = px - qx, ddy = py - qy;
-                if (ddx * ddx + ddy * ddy <= half * half) SetPx(x, y, col, 1f);
+                if (ddx * ddx + ddy * ddy <= half * half) SetPx(x, y, col, alpha);
             }
     }
 

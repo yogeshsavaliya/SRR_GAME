@@ -38,24 +38,39 @@ internal static class Program
 
     private static void GenerateLevels()
     {
-        // {width, height, arrowCount, seed} tuned for rising difficulty.
-        int[][] specs = new int[][]
+        // Each level is a different SHAPE. '#' marks cells to fill with arrows.
+        var shapes = new System.Collections.Generic.List<string[]>();
+        var names = new System.Collections.Generic.List<string>();
+
+        names.Add("Square");   shapes.Add(new[]{ "####", "####", "####", "####" });
+        names.Add("Diamond");  shapes.Add(new[]{ "..#..", ".###.", "#####", ".###.", "..#.." });
+        names.Add("Pyramid");  shapes.Add(new[]{ "..#..", ".###.", "#####" });
+        names.Add("Plus");     shapes.Add(new[]{ "..#..", "..#..", "#####", "..#..", "..#.." });
+        names.Add("Ring");     shapes.Add(new[]{ "#####", "#...#", "#...#", "#...#", "#####" });
+        names.Add("Letter H"); shapes.Add(new[]{ "#...#", "#...#", "#####", "#...#", "#...#" });
+        names.Add("Heart");    shapes.Add(new[]{ ".##.##.", "#######", "#######", ".#####.", "..###..", "...#..." });
+        names.Add("Big Diamond"); shapes.Add(new[]{ "...#...", "..###..", ".#####.", "#######", ".#####.", "..###..", "...#..." });
+        names.Add("Arrow Up"); shapes.Add(new[]{ "...#...", "..###..", ".#####.", "#######", "...#...", "...#...", "...#..." });
+
+        for (int i = 0; i < shapes.Count; i++)
         {
-            new[] {4, 4, 10, 101},
-            new[] {4, 4, 13, 202},
-            new[] {5, 5, 15, 303},
-            new[] {5, 5, 19, 404},
-            new[] {5, 5, 22, 505},
-            new[] {6, 6, 26, 606},
-            new[] {6, 6, 30, 707},
-            new[] {6, 6, 33, 808},
-        };
-        foreach (int[] s in specs)
-        {
-            Board b = LevelGenerator.Generate(s[0], s[1], s[2], s[3]);
-            bool solvable = BoardSolver.IsSolvable(b);
-            Console.WriteLine(b.Encode() + "    # " + s[0] + "x" + s[1] + " arrows=" +
-                              b.RemainingCount + " solvable=" + solvable);
+            int w, h;
+            bool[,] mask = LevelGenerator.ParseMask(shapes[i], out w, out h);
+            int cells = LevelGenerator.MaskCount(mask);
+
+            Board best = null;
+            for (int seed = 1; seed <= 400; seed++)
+            {
+                Board b = LevelGenerator.Generate(w, h, cells, seed, mask);
+                if (best == null || b.RemainingCount > best.RemainingCount)
+                {
+                    best = b;
+                    if (best.RemainingCount == cells) break;
+                }
+            }
+            bool solvable = BoardSolver.IsSolvable(best);
+            Console.WriteLine("\"" + best.Encode() + "\"  // " + names[i] + " " + w + "x" + h +
+                              " fill=" + best.RemainingCount + "/" + cells + " solvable=" + solvable);
         }
     }
 
