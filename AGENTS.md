@@ -59,6 +59,23 @@ just the shell exit status.
   Linux standalone build support. A built player is graphical, so launch it under a
   virtual display (`xvfb-run`) since Cloud pods are headless.
 
+### The game (Arrows Puzzle Escape)
+- Gameplay code lives in `Assets/Scripts/`. `Core/` is **pure C#** with no
+  `UnityEngine` dependency (board model, move resolution, hearts, solver, level
+  generator). `Game/` is the Unity view layer (procedural sprites, tap input,
+  animations, UI, level flow).
+- The game **auto-boots from any scene** via `GameBootstrap`
+  (`[RuntimeInitializeOnLoadMethod]`) — no scene wiring, prefabs, or art assets
+  are required, so pressing Play on the empty `SampleScene` runs the full game.
+- **Test the logic without a Unity license:** `bash tools/run-logic-tests.sh`
+  compiles `Core/` + `tools/LogicTests` with the editor's bundled Mono compiler
+  and runs mechanic/hearts/solver tests (all handcrafted + generated levels are
+  asserted solvable). `... gen` regenerates level layouts.
+- **Type-check the whole project without a license:** compile
+  `Assets/Scripts/**/*.cs` with `mcs -noconfig -nostdlib` referencing
+  `Data/NetStandard/ref/2.1.0/netstandard.dll` and the
+  `Data/Managed/UnityEngine/UnityEngine.*Module.dll` set.
+
 ### Non-obvious caveats
 - Only **one** Unity Editor may hold the project lock at a time. If a batchmode run
   is interrupted, remove a stale `Temp/UnityLockfile` under the project before retrying.
